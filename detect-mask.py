@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
+import time
 
 model = load_model('face_mask_detection_model.h5')
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -9,11 +10,16 @@ face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fronta
 cap = cv2.VideoCapture(0)  
 
 labels = ['No Mask', 'Mask']
+last_detection_time = 0
+detection_interval = 5
 
 while True:
     ret, frame = cap.read()
     if not ret:
         break
+    current_time = time.time()
+    if current_time - last_detection_time > detection_interval:
+        last_detection_time = current_time
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     face = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
@@ -30,7 +36,7 @@ while True:
         face = np.expand_dims(face, axis=0)
 
         prediction = model.predict(face)[0][0]
-        label = "Mask" if prediction < 0.5 else "No Mask"
+        label = labels[int(prediction > 0.5)]
         color = (0, 255, 0) if label == 'Mask' else (0, 0, 255)
 
         cv2.putText(frame,label, (x , y - 10),
