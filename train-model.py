@@ -2,15 +2,15 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 
 tf.random.set_seed(42)
 
-dataset_path = 'C:/Users/LENOVO/Documents/Github/FaceMaskDetection/dataset'
-img_size = (244, 244)
+dataset_path = 'C:/Users/LENOVO/Documents/Github/FaceMaskDetection/'
+img_size = (100, 100)
 batch_size = 32
 learning_rate = 1e-4
 EPOCHS = 15
@@ -29,23 +29,20 @@ datagen = ImageDataGenerator(
     fill_mode='nearest'
 )
 
-train_gen = datagen.flow_from_directory(
-    os.path.join(dataset_path, 'dataset'),
-    target_size=img_size,
-    batch_size=batch_size,
+train_generator = datagen.flow_from_directory(
+    'dataset/train',
+    target_size=(100, 100),
+    batch_size=32,
     class_mode='binary',
-    subset='training',
-    shuffle=True
 )
 
-val_gen = datagen.flow_from_directory(
-    os.path.join(dataset_path, 'dataset'),
-    target_size=img_size,
-    batch_size=batch_size,
+val_generator = datagen.flow_from_directory(
+    'dataset/val',
+    target_size=(100, 100),
+    batch_size=32,
     class_mode='binary',
-    subset='validation',
-    shuffle=True
 )
+
 model = Sequential([
     Conv2D(32, (3, 3), activation='relu', input_shape=(img_size[0], img_size[1], 3)),
     MaxPooling2D((2, 2)),
@@ -57,6 +54,7 @@ model = Sequential([
     MaxPooling2D((2, 2)),
 
     Flatten(),
+
     Dense(128, activation='relu'),
     Dropout(0.5),
     Dense(1, activation='sigmoid')
@@ -67,8 +65,8 @@ model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accurac
 print("Training the model")
 
 history = model.fit(
-    train_gen,
-    validation_data=val_gen,
+    train_generator,
+    validation_data=val_generator,
     epochs=EPOCHS
 )
 model.save('face_mask_detection_model.h5')
